@@ -30,7 +30,8 @@ function FormSubmission({ onSuccess, isLoading, isStaticMode = false }) {
 
     if (!name) return 'Name is required'
     if (!email) return 'Email is required'
-    if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) return 'Invalid email format'
+    if (!email.match(/^[^\s@]+@[^
+\s@]+\.[^\s@]+$/)) return 'Invalid email format'
     if (!message) return 'Message is required'
     if (message.length < 10) return 'Message must be at least 10 characters'
 
@@ -95,11 +96,6 @@ function FormSubmission({ onSuccess, isLoading, isStaticMode = false }) {
   return (
     <div className={styles.formContainer}>
       <h2 className={styles.heading}>Submit Your Message</h2>
-      {isStaticMode && (
-        <div className={styles.successMessage}>
-          ℹ️ Running in static mode: submissions are saved in this browser.
-        </div>
-      )}
 
       {error && <div className={styles.errorMessage}>{error}</div>}
       {success && <div className={styles.successMessage}>✓ Message submitted successfully!</div>}
