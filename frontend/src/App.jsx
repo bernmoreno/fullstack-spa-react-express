@@ -3,18 +3,30 @@ import FormSubmission from './components/FormSubmission'
 import SubmissionsList from './components/SubmissionsList'
 import styles from './App.module.css'
 
+const LOCAL_STORAGE_KEY = 'fullstack_spa_submissions'
+
 function App() {
   const [submissions, setSubmissions] = useState([])
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const isGithubPages = window?.location?.hostname?.includes('github.io') ?? false
 
   // Top-level await equivalent - fetch initial data on mount
   useEffect(() => {
     const initializeApp = async () => {
       try {
         setIsLoading(true)
-        // Simulate fetching initial state from server
-        await new Promise(resolve => setTimeout(resolve, 300))
+
+        if (isGithubPages) {
+          const storedSubmissions = localStorage.getItem(LOCAL_STORAGE_KEY)
+          const parsed = JSON.parse(storedSubmissions ?? '[]')
+          setSubmissions(Array.isArray(parsed) ? parsed : [])
+        } else {
+          const response = await fetch('/api/submissions')
+          const data = await response.json()
+          setSubmissions(data?.submissions ?? [])
+        }
+
         setIsLoading(false)
       } catch (error) {
         console.error('Failed to initialize app:', error)
@@ -22,8 +34,8 @@ function App() {
       }
     }
 
-    initializeApp()
-  }, [])
+    void initializeApp()
+  }, [isGithubPages])
 
   const handleSubmissionSuccess = (newSubmission) => {
     // Optional chaining and nullish coalescing - safe data access
@@ -34,7 +46,16 @@ function App() {
       message: newSubmission?.message ?? '',
       timestamp: newSubmission?.timestamp ?? new Date().toISOString(),
     }
-    setSubmissions([submission, ...submissions])
+
+    setSubmissions((prev) => {
+      const updated = [submission, ...prev]
+
+      if (isGithubPages) {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated))
+      }
+
+      return updated
+    })
   }
 
   return (
@@ -53,7 +74,11 @@ function App() {
       <main className={styles.main}>
         <div className={styles.gridContainer}>
           <section className={styles.formSection}>
-            <FormSubmission onSuccess={handleSubmissionSuccess} isLoading={isLoading} />
+            <FormSubmission
+              onSuccess={handleSubmissionSuccess}
+              isLoading={isLoading}
+              isStaticMode={isGithubPages}
+            />
           </section>
 
           <section className={styles.submissionsSection}>

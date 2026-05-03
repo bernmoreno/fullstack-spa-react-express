@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import FormInput from './FormInput'
 import styles from './FormSubmission.module.css'
 
-function FormSubmission({ onSuccess, isLoading }) {
+function FormSubmission({ onSuccess, isLoading, isStaticMode = false }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -18,6 +18,7 @@ function FormSubmission({ onSuccess, isLoading }) {
       ...prev,
       [name]: value,
     }))
+    // Clear error when user starts typing
     if (error) setError(null)
   }
 
@@ -50,23 +51,41 @@ function FormSubmission({ onSuccess, isLoading }) {
     setSuccess(false)
 
     try {
-      const response = await fetch('/api/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      })
+      let data = null
 
-      const data = await response.json()
+      if (isStaticMode) {
+        data = {
+          id: Math.random().toString(36).substr(2, 9),
+          name: formData?.name ?? '',
+          email: formData?.email ?? '',
+          message: formData?.message ?? '',
+          timestamp: new Date().toISOString(),
+        }
+      } else {
+        const response = await fetch('/api/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        })
 
-      if (!response.ok) {
-        throw new Error(data?.message ?? 'Failed to submit form')
+        data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data?.message ?? 'Failed to submit form')
+        }
       }
 
+      // Success: reset form and notify parent
       setSuccess(true)
       onSuccess(data)
       setFormData({ name: '', email: '', message: '' })
+
+      // Clear success message after 3 seconds
       setTimeout(() => setSuccess(false), 3000)
     } catch (err) {
+      // Optional chaining for error message extraction
       setError(err?.message ?? 'An unexpected error occurred')
     } finally {
       setIsSubmitting(false)
@@ -76,6 +95,11 @@ function FormSubmission({ onSuccess, isLoading }) {
   return (
     <div className={styles.formContainer}>
       <h2 className={styles.heading}>Submit Your Message</h2>
+      {isStaticMode && (
+        <div className={styles.successMessage}>
+          ℹ️ Running in static mode: submissions are saved in this browser.
+        </div>
+      )}
 
       {error && <div className={styles.errorMessage}>{error}</div>}
       {success && <div className={styles.successMessage}>✓ Message submitted successfully!</div>}
