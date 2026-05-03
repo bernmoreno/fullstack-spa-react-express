@@ -30,8 +30,7 @@ function FormSubmission({ onSuccess, isLoading, isStaticMode = false }) {
 
     if (!name) return 'Name is required'
     if (!email) return 'Email is required'
-    if (!email.match(/^[^\s@]+@[^
-\s@]+\.[^\s@]+$/)) return 'Invalid email format'
+    if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) return 'Invalid email format'
     if (!message) return 'Message is required'
     if (message.length < 10) return 'Message must be at least 10 characters'
 
